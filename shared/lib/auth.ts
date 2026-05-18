@@ -8,6 +8,15 @@ const loginSchema = z.object({
     password: z.string().min(8),
 });
 
+const DEFAULT_ADMIN_EMAIL = 'admin@hito.local';
+
+function getConfiguredAdminPassword(): string | undefined {
+    if (process.env.NODE_ENV === 'development') {
+        return process.env.DEV_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || 'admin123';
+    }
+    return process.env.ADMIN_PASSWORD || process.env.DEV_ADMIN_PASSWORD;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
         Credentials({
@@ -31,11 +40,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             AND deleted_at IS NULL
         `;
 
-                // Dev: ensure default admin exists (migration seed only runs on fresh DB init)
-                if (!admin && process.env.NODE_ENV === 'development' && email === 'admin@hito.local') {
+                // Ensure default admin exists (seed may not run on Coolify DB init)
+                if (!admin && email === DEFAULT_ADMIN_EMAIL) {
                     await sql`
             INSERT INTO admin_users (id, email, role, is_active)
-            VALUES ('00000000-0000-0000-0000-000000000001', 'admin@hito.local', 'admin', true)
+            VALUES ('00000000-0000-0000-0000-000000000001', ${DEFAULT_ADMIN_EMAIL}, 'admin', true)
             ON CONFLICT (email) DO NOTHING
           `;
                     [admin] = await sql`
@@ -49,16 +58,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                 if (!admin) return null;
 
-                // Dev-only: accept fixed password when no password column exists yet.
-                // In production, add password_hash to admin_users and verify with bcrypt/argon2.
-                const password = parsed.data.password;
-                if (process.env.NODE_ENV === 'development') {
-                    const devPassword = process.env.DEV_ADMIN_PASSWORD || 'admin123';
-                    if (password !== devPassword) return null;
-                } else {
-                    // Production: no login until password_hash column + bcrypt/argon2 is added
+                const expectedPassword = getConfiguredAdminPassword();
+                if (!expectedPassword) {
+                    console.error(
+                        '[auth] ADMIN_PASSWORD is not set. Add it in Coolify environment variables.'
+                    );
                     return null;
                 }
+
+                const password = parsed.data.password;
+                if (password !== expectedPassword) return null;
 
                 return {
                     id: admin.id,
