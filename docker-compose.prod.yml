@@ -1,0 +1,61 @@
+# Production docker-compose: runs built Next.js + Postgres + Redis
+# Usage: docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  # ---- Next.js App (Production) ----
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_CHATWOOT_BASE_URL: ${NEXT_PUBLIC_CHATWOOT_BASE_URL}
+        NEXT_PUBLIC_DEFAULT_WEBSITE_TOKEN: ${NEXT_PUBLIC_DEFAULT_WEBSITE_TOKEN}
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env.local
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # ---- PostgreSQL 16 ----
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hito_health
+      POSTGRES_USER: hito_admin
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hito_admin -d hito_health']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---- Redis ----
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

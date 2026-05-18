@@ -1,0 +1,55 @@
+# Development docker-compose: runs Next.js dev server + Postgres + Redis
+services:
+  # ---- Next.js App ----
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env.local
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- PostgreSQL 16 ----
+  db:
+    image: postgres:16-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: hito_health
+      POSTGRES_USER: hito_admin
+      POSTGRES_PASSWORD: hito_admin_dev_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hito_admin -d hito_health']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---- Redis (rate limiting + analytics dedup) ----
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
