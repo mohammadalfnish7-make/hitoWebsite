@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/shared/lib/db';
-import { redis } from '@/shared/lib/rate-limit';
+import { getRedis } from '@/shared/lib/rate-limit';
 
 /**
  * GET /api/health
@@ -26,6 +26,8 @@ export async function GET() {
 
     // Check Redis
     try {
+        const redis = getRedis();
+        if (redis.status !== 'ready') await redis.connect();
         const pong = await redis.ping();
         status.redis = pong === 'PONG' ? 'ok' : 'error';
     } catch (err) {

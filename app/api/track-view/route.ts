@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { trackView } from '@/features/analytics';
-import { trackViewLimiter } from '@/shared/lib/rate-limit';
-import { redis } from '@/shared/lib/rate-limit';
+import { trackViewLimiter, getRedis } from '@/shared/lib/rate-limit';
 import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
 
@@ -48,6 +47,8 @@ export async function POST(req: Request) {
         const dedupKey = `hito:dedup:${sessionId}:${service_id}:${sub_service_id || 'null'}:${today}`;
 
         // SET NX — only increment if this is a new visit for this session+page+day
+        const redis = getRedis();
+        if (redis.status !== 'ready') await redis.connect();
         const wasSet = await redis.set(dedupKey, '1', 'EX', SESSION_TTL, 'NX');
 
         if (wasSet) {

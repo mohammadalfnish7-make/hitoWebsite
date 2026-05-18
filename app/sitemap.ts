@@ -4,6 +4,9 @@ import type { MetadataRoute } from 'next';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hitouae.com';
 
+/** Do not prerender at build time — DB is not available during Docker image build. */
+export const dynamic = 'force-dynamic';
+
 /**
  * Dynamic sitemap generation.
  * Generates locale-aware URLs for all active services and sub-services.
