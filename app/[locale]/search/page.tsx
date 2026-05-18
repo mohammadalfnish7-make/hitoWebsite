@@ -62,8 +62,10 @@ export default async function SearchPage({ params, searchParams }: Props) {
             {query.length >= 2 && (
                 <>
                     <p style={{ color: 'var(--muted-foreground)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                        {locale === 'ar' ? `عرض ${results.length} نتيجة لـ "` : `Showing ${results.length} results for "`}
-                        <strong>{query}</strong>"
+                        {locale === 'ar'
+                            ? `عرض ${results.length} نتيجة لـ `
+                            : `Showing ${results.length} results for `}
+                        &quot;<strong>{query}</strong>&quot;
                     </p>
 
                     {results.length === 0 ? (
