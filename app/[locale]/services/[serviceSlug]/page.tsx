@@ -9,6 +9,8 @@ import { getLocalizedField } from '@/shared/lib/i18n';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { getCachedTranslations } from '@/features/translations';
+import { getCachedLocales } from '@/features/locales';
 
 interface Props {
     params: Promise<{ locale: string; serviceSlug: string }>;
@@ -19,15 +21,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const service = await getServiceBySlug(serviceSlug);
     if (!service) return { title: 'Not Found' };
 
+    const locales = await getCachedLocales();
+    const languages: Record<string, string> = {};
+    for (const loc of locales) {
+        languages[loc.code] = `/${loc.code}/services/${serviceSlug}`;
+    }
+
     return {
-        title: getLocalizedField(service.meta_title, locale) || service.name_en,
+        title: getLocalizedField(service.meta_title, locale) || getLocalizedField(service.names, locale),
         description: getLocalizedField(service.meta_description, locale) || service.description || '',
-        alternates: {
-            languages: {
-                en: `/en/services/${serviceSlug}`,
-                ar: `/ar/services/${serviceSlug}`,
-            },
-        },
+        alternates: { languages },
     };
 }
 
@@ -38,8 +41,10 @@ export default async function ServiceDetailPage({ params }: Props) {
 
     const subServices = await getSubServicesByServiceId(service.id);
     const initialComments = await getVisibleComments(service.id, undefined);
-    const name = locale === 'ar' ? (service.name_ar || service.name_en) : service.name_en;
+    const translations = await getCachedTranslations(locale);
+    const t = (key: string, fallback: string) => translations[key] || fallback;
 
+    const name = getLocalizedField(service.names, locale);
     const chatwootToken = resolveToken(undefined, service.chatwoot_website_token);
 
     return (
@@ -48,9 +53,9 @@ export default async function ServiceDetailPage({ params }: Props) {
             <PublicChatwoot locale={locale} token={chatwootToken} serviceSlug={serviceSlug} />
             {/* Breadcrumb */}
             <nav style={{ marginBottom: '2rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>
-                <Link href={`/${locale}`} style={{ color: 'var(--primary)' }}>{locale === 'ar' ? 'الرئيسية' : 'Home'}</Link>
+                <Link href={`/${locale}`} style={{ color: 'var(--primary)' }}>{t('breadcrumb.home', 'Home')}</Link>
                 {' / '}
-                <Link href={`/${locale}/services`} style={{ color: 'var(--primary)' }}>{locale === 'ar' ? 'الخدمات' : 'Services'}</Link>
+                <Link href={`/${locale}/services`} style={{ color: 'var(--primary)' }}>{t('breadcrumb.services', 'Services')}</Link>
                 {' / '}
                 <span>{name}</span>
             </nav>
@@ -66,7 +71,7 @@ export default async function ServiceDetailPage({ params }: Props) {
             {subServices.length > 0 && (
                 <section>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem' }}>
-                        {locale === 'ar' ? 'الخدمات الفرعية' : 'Available Treatments'}
+                        {t('service.available_treatments', 'Available Treatments')}
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
                         {subServices.map(sub => (
@@ -89,11 +94,11 @@ export default async function ServiceDetailPage({ params }: Props) {
                                 )}
                                 <div style={{ padding: '1.5rem' }}>
                                     <h3 style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                        {locale === 'ar' ? (sub.name_ar || sub.name_en) : sub.name_en}
+                                        {getLocalizedField(sub.names, locale)}
                                     </h3>
                                     {sub.avg_cost_uae && (
                                         <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>
-                                            {locale === 'ar' ? 'من' : 'From'} {sub.avg_cost_uae} {sub.cost_uae_currency || 'AED'}
+                                            {t('service.from', 'From')} {sub.avg_cost_uae} {sub.cost_uae_currency || 'AED'}
                                         </p>
                                     )}
                                 </div>

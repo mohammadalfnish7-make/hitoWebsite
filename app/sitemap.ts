@@ -1,5 +1,4 @@
 import { sql } from '@/shared/lib/db';
-import { STATIC_LOCALES } from '@/shared/lib/i18n';
 import type { MetadataRoute } from 'next';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hitouae.com';
@@ -15,8 +14,12 @@ export const dynamic = 'force-dynamic';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const entries: MetadataRoute.Sitemap = [];
 
+    // Fetch active locales directly from DB for sitemap
+    const locales = await sql`SELECT code FROM locales WHERE is_active = true`;
+    const localeCodes = locales.map(l => l.code);
+
     // Home pages per locale
-    for (const locale of STATIC_LOCALES) {
+    for (const locale of localeCodes) {
         entries.push({
             url: `${SITE_URL}/${locale}`,
             lastModified: new Date(),
@@ -45,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   `;
 
     for (const service of services) {
-        for (const locale of STATIC_LOCALES) {
+        for (const locale of localeCodes) {
             entries.push({
                 url: `${SITE_URL}/${locale}/services/${service.slug}`,
                 lastModified: new Date(service.updated_at),
@@ -64,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   `;
 
     for (const sub of subServices) {
-        for (const locale of STATIC_LOCALES) {
+        for (const locale of localeCodes) {
             entries.push({
                 url: `${SITE_URL}/${locale}/services/${sub.service_slug}/${sub.sub_slug}`,
                 lastModified: new Date(sub.updated_at),

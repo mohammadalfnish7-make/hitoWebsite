@@ -3,6 +3,7 @@ export interface Service {
     slug: string;
     name_en: string;
     name_ar?: string;
+    names?: Record<string, string>;
     description?: string;
     meta_title?: Record<string, string>;
     meta_description?: Record<string, string>;

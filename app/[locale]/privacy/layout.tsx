@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { STATIC_LOCALES } from '@/shared/lib/i18n';
+import { getCachedLocales } from '@/features/locales';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hitouae.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
+    const locales = await getCachedLocales();
     const languages: Record<string, string> = {};
-    for (const loc of STATIC_LOCALES) {
-        languages[loc] = `${SITE_URL}/${loc}/privacy`;
+    for (const loc of locales) {
+        languages[loc.code] = `${SITE_URL}/${loc.code}/privacy`;
     }
     return {
         title: 'Privacy & Data Deletion — Hito Health Tourism',

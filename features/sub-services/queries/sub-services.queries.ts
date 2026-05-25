@@ -4,7 +4,7 @@ import type { SubService } from '../types';
 /** List all active sub-services for a given service. */
 export async function getSubServicesByServiceId(serviceId: string): Promise<SubService[]> {
     const rows = await sql`
-    SELECT id, service_id, slug, name_en, name_ar, description,
+    SELECT id, service_id, slug, name_en, name_ar, names, description,
            meta_title, meta_description, chatwoot_website_token,
            main_image_url, avg_cost_uae, avg_cost_home_country,
            cost_uae_currency, cost_home_currency, cost_notes,
@@ -23,7 +23,7 @@ export async function getSubServiceBySlug(
     slug: string
 ): Promise<SubService | null> {
     const [row] = await sql`
-    SELECT id, service_id, slug, name_en, name_ar, description,
+    SELECT id, service_id, slug, name_en, name_ar, names, description,
            meta_title, meta_description, chatwoot_website_token,
            main_image_url, avg_cost_uae, avg_cost_home_country,
            cost_uae_currency, cost_home_currency, cost_notes,

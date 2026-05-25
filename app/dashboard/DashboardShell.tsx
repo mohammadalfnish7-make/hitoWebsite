@@ -12,6 +12,7 @@ const navItems = [
     { label: 'Comments', href: '/dashboard/comments', icon: '💬' },
     { label: 'Deletion Requests', href: '/dashboard/deletion-requests', icon: '🗑️' },
     { label: 'Analytics', href: '/dashboard/analytics', icon: '📈' },
+    { label: 'Languages', href: '/dashboard/locales', icon: '🌍' },
     { label: 'Translations', href: '/dashboard/translations', icon: '🌐' },
     { label: 'Audit Log', href: '/dashboard/audit-log', icon: '📋' },
 ];

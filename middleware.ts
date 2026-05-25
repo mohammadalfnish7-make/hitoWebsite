@@ -1,7 +1,6 @@
 import { auth } from '@/shared/lib/auth';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { DEFAULT_LOCALE, STATIC_LOCALES, extractLocale } from '@/shared/lib/i18n';
+import { DEFAULT_LOCALE, extractLocale } from '@/shared/lib/i18n';
 
 /**
  * Middleware: auth guard + locale resolution.
@@ -13,18 +12,19 @@ import { DEFAULT_LOCALE, STATIC_LOCALES, extractLocale } from '@/shared/lib/i18n
  * Public endpoints (translations, comments, services) are NOT intercepted.
  */
 
+const localePattern = '[a-z]{2,3}(?:-[A-Z]{2})?';
+
 export default auth((req) => {
     const { pathname } = req.nextUrl;
 
     // --- Redirect locale-prefixed dashboard to /dashboard (dashboard has no locale) ---
-    const localePrefix = STATIC_LOCALES.join('|');
-    const localeDashboardMatch = pathname.match(new RegExp(`^/(${localePrefix})/dashboard/?$`));
+    const localeDashboardMatch = pathname.match(new RegExp(`^/(${localePattern})/dashboard/?$`));
     if (localeDashboardMatch) {
         return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-    const localeDashboardDeep = pathname.match(new RegExp(`^/(${localePrefix})/dashboard/`));
+    const localeDashboardDeep = pathname.match(new RegExp(`^/(${localePattern})/dashboard/`));
     if (localeDashboardDeep) {
-        const rest = pathname.replace(new RegExp(`^/(${localePrefix})/dashboard`), '/dashboard');
+        const rest = pathname.replace(new RegExp(`^/(${localePattern})/dashboard`), '/dashboard');
         return NextResponse.redirect(new URL(rest, req.url));
     }
 
@@ -48,12 +48,10 @@ export default auth((req) => {
     // --- Locale resolution for public pages ---
     if (!pathname.startsWith('/api/') && !pathname.startsWith('/dashboard')) {
         const locale = extractLocale(pathname);
-        const hasLocale = STATIC_LOCALES.some(
-            (l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`
-        );
+        const hasLocalePrefix = pathname.match(new RegExp(`^/${localePattern}(/|$)`));
 
         // If no locale prefix, redirect to default locale
-        if (!hasLocale && pathname === '/') {
+        if (!hasLocalePrefix && pathname === '/') {
             return NextResponse.redirect(new URL(`/${DEFAULT_LOCALE}`, req.url));
         }
 

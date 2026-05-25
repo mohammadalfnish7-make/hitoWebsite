@@ -11,6 +11,16 @@ export default function TranslationsPage() {
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState({ key: '', value: '', is_verified: false });
 
+    const [locales, setLocales] = useState<{code: string; name: string}[]>([]);
+
+    async function fetchLocales() {
+        const res = await fetch('/api/admin/locales');
+        if (res.ok) {
+            const data = await res.json();
+            setLocales(data);
+        }
+    }
+
     async function fetchTranslations() {
         setLoading(true);
         const [locRes, enRes] = await Promise.all([
@@ -28,7 +38,10 @@ export default function TranslationsPage() {
         setLoading(false);
     }
 
-    useEffect(() => { fetchTranslations(); }, [locale]);
+    useEffect(() => { 
+        fetchLocales();
+        fetchTranslations(); 
+    }, [locale]);
 
     async function handleSave(e: React.FormEvent) {
         e.preventDefault();
@@ -57,11 +70,11 @@ export default function TranslationsPage() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Translations</h1>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {['en', 'ar'].map(l => (
-                        <button key={l} onClick={() => setLocale(l)}
-                            style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: locale === l ? '#0ea5e9' : 'transparent', color: locale === l ? '#fff' : 'var(--muted-foreground)', cursor: 'pointer' }}>
-                            {l.toUpperCase()}
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {locales.map(l => (
+                        <button key={l.code} onClick={() => setLocale(l.code)}
+                            style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: locale === l.code ? '#0ea5e9' : 'transparent', color: locale === l.code ? '#fff' : 'var(--muted-foreground)', cursor: 'pointer' }}>
+                            {l.code.toUpperCase()} - {l.name}
                         </button>
                     ))}
                 </div>

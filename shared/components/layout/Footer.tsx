@@ -1,16 +1,17 @@
 import Link from 'next/link';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
-
 interface FooterProps {
     locale: string;
+    translations: Record<string, string>;
 }
 
-export function Footer({ locale }: FooterProps) {
-    const isRtl = locale === 'ar';
-    const privacyLabel = locale === 'ar' ? 'سياسة الخصوصية وحذف البيانات' : 'Privacy & Data Deletion';
-    const homeLabel = locale === 'ar' ? 'الرئيسية' : 'Home';
-    const servicesLabel = locale === 'ar' ? 'الخدمات' : 'Services';
+export function Footer({ locale, translations }: FooterProps) {
+    const t = (key: string, fallback: string) => translations[key] || fallback;
+
+    const privacyLabel = t('footer.privacy', 'Privacy & Data Deletion');
+    const homeLabel = t('footer.home', 'Home');
+    const servicesLabel = t('footer.services', 'Services');
+    const copyrightLabel = t('footer.copyright', 'All rights reserved.');
 
     return (
         <footer
@@ -36,7 +37,7 @@ export function Footer({ locale }: FooterProps) {
                 </Link>
             </nav>
             <p style={{ margin: 0 }}>
-                © {new Date().getFullYear()} Hito Health Tourism. {locale === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
+                © {new Date().getFullYear()} Hito Health Tourism. {copyrightLabel}
             </p>
         </footer>
     );

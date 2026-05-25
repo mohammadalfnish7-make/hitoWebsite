@@ -8,20 +8,21 @@ function validateChatwootToken(token: string) {
     return CHATWOOT_TOKEN_REGEX.test(token.trim());
 }
 
-const defaultCostNotes = { en: '', ar: '' };
-
 export default function SubServicesPage() {
     const [services, setServices] = useState<any[]>([]);
+    const [locales, setLocales] = useState<{code: string; name: string; is_rtl: boolean}[]>([]);
     const [selectedServiceId, setSelectedServiceId] = useState('');
     const [subServices, setSubServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
-    const [costNotesTab, setCostNotesTab] = useState<'en' | 'ar'>('en');
+    const [costNotesTab, setCostNotesTab] = useState('en');
+    
     const [form, setForm] = useState({
         slug: '',
         name_en: '',
         name_ar: '',
+        names: {} as Record<string, string>,
         description: '',
         main_image_url: '',
         chatwoot_website_token: '',
@@ -30,17 +31,19 @@ export default function SubServicesPage() {
         avg_cost_home_country: '' as string | number,
         cost_uae_currency: 'AED',
         cost_home_currency: '',
-        cost_notes: defaultCostNotes as Record<string, string>,
+        cost_notes: {} as Record<string, string>,
     });
 
     useEffect(() => {
-        fetch('/api/admin/services')
-            .then((r) => r.json())
-            .then((data) => {
-                const active = data.filter((s: any) => !s.deleted_at);
-                setServices(active);
-                if (active.length > 0 && !selectedServiceId) setSelectedServiceId(active[0].id);
-            });
+        Promise.all([
+            fetch('/api/admin/services').then((r) => r.json()),
+            fetch('/api/admin/locales').then((r) => r.json()),
+        ]).then(([servicesData, localesData]) => {
+            const active = servicesData.filter((s: any) => !s.deleted_at);
+            setServices(active);
+            if (active.length > 0 && !selectedServiceId) setSelectedServiceId(active[0].id);
+            setLocales(localesData.filter((l: any) => l.is_active));
+        });
     }, []);
 
     useEffect(() => {
@@ -59,6 +62,7 @@ export default function SubServicesPage() {
             slug: '',
             name_en: '',
             name_ar: '',
+            names: {},
             description: '',
             main_image_url: '',
             chatwoot_website_token: '',
@@ -67,20 +71,21 @@ export default function SubServicesPage() {
             avg_cost_home_country: '',
             cost_uae_currency: 'AED',
             cost_home_currency: '',
-            cost_notes: { ...defaultCostNotes },
+            cost_notes: {},
         });
         setEditId(null);
         setShowForm(false);
+        setCostNotesTab('en');
     }
 
     function startEdit(ss: any) {
-        const costNotes = typeof ss.cost_notes === 'object' && ss.cost_notes
-            ? { en: ss.cost_notes.en || '', ar: ss.cost_notes.ar || '' }
-            : { ...defaultCostNotes };
+        const costNotes = typeof ss.cost_notes === 'object' && ss.cost_notes ? ss.cost_notes : {};
+        const initialNames = ss.names || { en: ss.name_en, ar: ss.name_ar || '' };
         setForm({
             slug: ss.slug,
             name_en: ss.name_en,
             name_ar: ss.name_ar || '',
+            names: initialNames,
             description: ss.description || '',
             main_image_url: ss.main_image_url || '',
             chatwoot_website_token: ss.chatwoot_website_token || '',
@@ -101,11 +106,13 @@ export default function SubServicesPage() {
             alert('Invalid Chatwoot token format. Use 15–50 alphanumeric characters or hyphens.');
             return;
         }
+        
         const payload = {
             service_id: selectedServiceId,
             slug: form.slug,
-            name_en: form.name_en,
-            name_ar: form.name_ar || null,
+            name_en: form.names['en'] || form.name_en,
+            name_ar: form.names['ar'] || form.name_ar,
+            names: form.names,
             description: form.description || null,
             main_image_url: form.main_image_url || null,
             chatwoot_website_token: form.chatwoot_website_token || null,
@@ -178,6 +185,7 @@ export default function SubServicesPage() {
                             slug: '',
                             name_en: '',
                             name_ar: '',
+                            names: {},
                             description: '',
                             main_image_url: '',
                             chatwoot_website_token: '',
@@ -186,7 +194,7 @@ export default function SubServicesPage() {
                             avg_cost_home_country: '',
                             cost_uae_currency: 'AED',
                             cost_home_currency: '',
-                            cost_notes: { ...defaultCostNotes },
+                            cost_notes: {},
                         });
                     }}
                     style={{
@@ -225,17 +233,25 @@ export default function SubServicesPage() {
                             <input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required pattern="[a-z0-9-]+" style={inputStyle} placeholder="e.g. veneers" />
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Name (EN) *</label>
-                            <input value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} required style={inputStyle} />
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Name (AR)</label>
-                            <input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} style={inputStyle} dir="rtl" />
-                        </div>
-                        <div>
                             <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Order</label>
                             <input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: parseInt(e.target.value, 10) || 0 })} style={inputStyle} />
                         </div>
+                        
+                        {/* Dynamic Locale Names */}
+                        {locales.map(loc => (
+                            <div key={loc.code}>
+                                <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Name ({loc.code.toUpperCase()}){loc.code === 'en' ? ' *' : ''}</label>
+                                <input 
+                                    value={form.names[loc.code] || ''} 
+                                    onChange={e => setForm({ ...form, names: { ...form.names, [loc.code]: e.target.value } })} 
+                                    required={loc.code === 'en'} 
+                                    style={inputStyle} 
+                                    placeholder={`Name in ${loc.name}`} 
+                                    dir={loc.is_rtl ? 'rtl' : 'ltr'} 
+                                />
+                            </div>
+                        ))}
+                        
                         <div style={{ gridColumn: 'span 2' }}>
                             <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Description</label>
                             <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, minHeight: '80px' }} />
@@ -260,33 +276,34 @@ export default function SubServicesPage() {
                             <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Cost home currency</label>
                             <input value={form.cost_home_currency} onChange={(e) => setForm({ ...form, cost_home_currency: e.target.value })} style={inputStyle} placeholder="USD" maxLength={3} />
                         </div>
+                        
                         <div style={{ gridColumn: 'span 2' }}>
                             <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Cost notes (per locale)</label>
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                {(['en', 'ar'] as const).map((loc) => (
+                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                {locales.map((loc) => (
                                     <button
-                                        key={loc}
+                                        key={loc.code}
                                         type="button"
-                                        onClick={() => setCostNotesTab(loc)}
+                                        onClick={() => setCostNotesTab(loc.code)}
                                         style={{
                                             padding: '0.4rem 0.8rem',
                                             borderRadius: '6px',
-                                            border: costNotesTab === loc ? '2px solid #0ea5e9' : '1px solid var(--border)',
-                                            background: costNotesTab === loc ? 'rgba(14,165,233,0.1)' : 'transparent',
+                                            border: costNotesTab === loc.code ? '2px solid #0ea5e9' : '1px solid var(--border)',
+                                            background: costNotesTab === loc.code ? 'rgba(14,165,233,0.1)' : 'transparent',
                                             cursor: 'pointer',
                                             fontWeight: 500,
                                         }}
                                     >
-                                        {loc.toUpperCase()}
+                                        {loc.code.toUpperCase()}
                                     </button>
                                 ))}
                             </div>
                             <textarea
-                                value={form.cost_notes[costNotesTab]}
+                                value={form.cost_notes[costNotesTab] || ''}
                                 onChange={(e) => setForm({ ...form, cost_notes: { ...form.cost_notes, [costNotesTab]: e.target.value } })}
                                 style={{ ...inputStyle, minHeight: '70px' }}
-                                placeholder={costNotesTab === 'ar' ? 'ملاحظات التكلفة بالعربية' : 'Cost disclaimer in English'}
-                                dir={costNotesTab === 'ar' ? 'rtl' : 'ltr'}
+                                placeholder={`Notes in ${costNotesTab}`}
+                                dir={locales.find(l => l.code === costNotesTab)?.is_rtl ? 'rtl' : 'ltr'}
                             />
                         </div>
                         <div style={{ gridColumn: 'span 2' }}>
@@ -317,6 +334,7 @@ export default function SubServicesPage() {
                                 <th style={thStyle}>Order</th>
                                 <th style={thStyle}>Slug</th>
                                 <th style={thStyle}>Name</th>
+                                <th style={thStyle}>Languages</th>
                                 <th style={thStyle}>Cost (UAE)</th>
                                 <th style={thStyle}>Image</th>
                                 <th style={thStyle}>Chatwoot</th>
@@ -324,11 +342,19 @@ export default function SubServicesPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {subServices.filter((ss: any) => !ss.deleted_at).map((ss: any) => (
+                            {subServices.filter((ss: any) => !ss.deleted_at).map((ss: any) => {
+                                const namesObj = ss.names || { en: ss.name_en, ar: ss.name_ar };
+                                const translatedCount = Object.values(namesObj).filter(v => v).length;
+                                return (
                                 <tr key={ss.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                     <td style={tdStyle}>{ss.order}</td>
                                     <td style={tdStyle}><code>{ss.slug}</code></td>
-                                    <td style={tdStyle}>{ss.name_en}</td>
+                                    <td style={tdStyle}>{ss.names?.['en'] || ss.name_en}</td>
+                                    <td style={tdStyle}>
+                                        <span style={{ fontSize: '0.75rem', background: 'var(--muted)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                                            {translatedCount} / {locales.length}
+                                        </span>
+                                    </td>
                                     <td style={tdStyle}>{ss.avg_cost_uae ? `${ss.avg_cost_uae} ${ss.cost_uae_currency || 'AED'}` : '—'}</td>
                                     <td style={tdStyle}>{ss.main_image_url ? '🖼️' : '—'}</td>
                                     <td style={tdStyle}>{ss.chatwoot_website_token ? '✅' : '🔄'}</td>
@@ -337,7 +363,7 @@ export default function SubServicesPage() {
                                         <button type="button" onClick={() => handleDelete(ss.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontWeight: 500 }}>Delete</button>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 </div>

@@ -3,7 +3,8 @@ import { getLocalizedField } from '@/shared/lib/i18n';
 import { PublicChatwoot } from '@/shared/components/chatwoot/PublicChatwoot';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { STATIC_LOCALES } from '@/shared/lib/i18n';
+import { getCachedLocales } from '@/features/locales';
+import { getCachedTranslations } from '@/features/translations';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hitouae.com';
 
@@ -13,13 +14,16 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
+    const locales = await getCachedLocales();
     const languages: Record<string, string> = {};
-    for (const loc of STATIC_LOCALES) {
-        languages[loc] = `${SITE_URL}/${loc}/services`;
+    for (const loc of locales) {
+        languages[loc.code] = `${SITE_URL}/${loc.code}/services`;
     }
+    const translations = await getCachedTranslations(locale);
+
     return {
-        title: 'Our Services — Hito Health Tourism',
-        description: 'Explore our premium health tourism services in the UAE.',
+        title: translations['services.meta_title'] || 'Our Services — Hito Health Tourism',
+        description: translations['services.meta_desc'] || 'Explore our premium health tourism services in the UAE.',
         alternates: { canonical: `${SITE_URL}/${locale}/services`, languages },
     };
 }
@@ -27,15 +31,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ServicesListPage({ params }: Props) {
     const { locale } = await params;
     const services = await getServices();
+    const translations = await getCachedTranslations(locale);
+    const t = (key: string, fallback: string) => translations[key] || fallback;
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
             <PublicChatwoot locale={locale} />
             <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.5rem', textAlign: 'center' }}>
-                {locale === 'ar' ? 'خدماتنا' : 'Our Services'}
+                {t('services.title', 'Our Services')}
             </h1>
             <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', marginBottom: '3rem', fontSize: '1.1rem' }}>
-                {locale === 'ar' ? 'اكتشف خدمات السياحة العلاجية المتميزة لدينا' : 'Discover our premium health tourism services in the UAE'}
+                {t('services.subtitle', 'Discover our premium health tourism services in the UAE')}
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
@@ -55,7 +61,7 @@ export default async function ServicesListPage({ params }: Props) {
                         }}
                     >
                         <h2 style={{ fontSize: '1.35rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                            {locale === 'ar' ? (service.name_ar || service.name_en) : service.name_en}
+                            {getLocalizedField(service.names, locale)}
                         </h2>
                         {service.description && (
                             <p style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>
@@ -70,7 +76,7 @@ export default async function ServicesListPage({ params }: Props) {
                             alignItems: 'center',
                             gap: '0.3rem'
                         }}>
-                            {locale === 'ar' ? 'اعرف المزيد' : 'Learn more'} →
+                            {t('services.learn_more', 'Learn more')} →
                         </span>
                     </Link>
                 ))}
@@ -78,7 +84,7 @@ export default async function ServicesListPage({ params }: Props) {
 
             {services.length === 0 && (
                 <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', padding: '3rem' }}>
-                    No services available yet.
+                    {t('services.empty', 'No services available yet.')}
                 </p>
             )}
         </div>

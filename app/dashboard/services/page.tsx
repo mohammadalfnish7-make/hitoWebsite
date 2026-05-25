@@ -15,6 +15,7 @@ interface Service {
     slug: string;
     name_en: string;
     name_ar?: string;
+    names?: Record<string, string>;
     description?: string;
     chatwoot_website_token?: string;
     order: number;
@@ -23,20 +24,27 @@ interface Service {
 
 export default function ServicesPage() {
     const [services, setServices] = useState<Service[]>([]);
+    const [locales, setLocales] = useState<{code: string; name: string; is_rtl: boolean}[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ slug: '', name_en: '', name_ar: '', description: '', chatwoot_website_token: '', order: 0 });
+    const [form, setForm] = useState({ slug: '', name_en: '', name_ar: '', names: {} as Record<string, string>, description: '', chatwoot_website_token: '', order: 0 });
     const [editId, setEditId] = useState<string | null>(null);
 
-    async function fetchServices() {
+    async function fetchData() {
         setLoading(true);
-        const res = await fetch('/api/admin/services');
-        const data = await res.json();
-        setServices(data);
+        const [servicesRes, localesRes] = await Promise.all([
+            fetch('/api/admin/services'),
+            fetch('/api/admin/locales')
+        ]);
+        if (servicesRes.ok) setServices(await servicesRes.json());
+        if (localesRes.ok) {
+            const allLocales = await localesRes.json();
+            setLocales(allLocales.filter((l: any) => l.is_active));
+        }
         setLoading(false);
     }
 
-    useEffect(() => { fetchServices(); }, []);
+    useEffect(() => { fetchData(); }, []);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -44,18 +52,26 @@ export default function ServicesPage() {
             alert('Invalid Chatwoot token format. Use 15–50 alphanumeric characters or hyphens.');
             return;
         }
+        
+        // Ensure name_en and name_ar are correctly set from the names JSONB
+        const payload = {
+            ...form,
+            name_en: form.names['en'] || form.name_en,
+            name_ar: form.names['ar'] || form.name_ar,
+        };
+
         const url = editId ? `/api/admin/services/${editId}` : '/api/admin/services';
         const method = editId ? 'PUT' : 'POST';
         const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form),
+            body: JSON.stringify(payload),
         });
         if (res.ok) {
             setShowForm(false);
             setEditId(null);
-            setForm({ slug: '', name_en: '', name_ar: '', description: '', chatwoot_website_token: '', order: 0 });
-            fetchServices();
+            setForm({ slug: '', name_en: '', name_ar: '', names: {}, description: '', chatwoot_website_token: '', order: 0 });
+            fetchData();
         } else {
             const err = await res.json();
             alert(err.error || 'Failed to save');
@@ -66,7 +82,7 @@ export default function ServicesPage() {
         if (!confirm('Are you sure you want to soft-delete this service?')) return;
         const res = await fetch(`/api/admin/services/${id}`, { method: 'DELETE' });
         if (res.ok) {
-            fetchServices();
+            fetchData();
         } else {
             const err = await res.json();
             alert(err.error || 'Failed to delete');
@@ -74,7 +90,16 @@ export default function ServicesPage() {
     }
 
     function startEdit(s: Service) {
-        setForm({ slug: s.slug, name_en: s.name_en, name_ar: s.name_ar || '', description: s.description || '', chatwoot_website_token: s.chatwoot_website_token || '', order: s.order });
+        const initialNames = s.names || { en: s.name_en, ar: s.name_ar || '' };
+        setForm({ 
+            slug: s.slug, 
+            name_en: s.name_en, 
+            name_ar: s.name_ar || '', 
+            names: initialNames,
+            description: s.description || '', 
+            chatwoot_website_token: s.chatwoot_website_token || '', 
+            order: s.order 
+        });
         setEditId(s.id);
         setShowForm(true);
     }
@@ -83,7 +108,7 @@ export default function ServicesPage() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Services</h1>
-                <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ slug: '', name_en: '', name_ar: '', description: '', chatwoot_website_token: '', order: 0 }); }}
+                <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ slug: '', name_en: '', name_ar: '', names: {}, description: '', chatwoot_website_token: '', order: 0 }); }}
                     style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
                     {showForm ? 'Cancel' : '+ Add Service'}
                 </button>
@@ -97,17 +122,25 @@ export default function ServicesPage() {
                             <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} required style={inputStyle} placeholder="e.g. dental" />
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Name (EN)</label>
-                            <input value={form.name_en} onChange={e => setForm({ ...form, name_en: e.target.value })} required style={inputStyle} placeholder="Dental Services" />
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Name (AR)</label>
-                            <input value={form.name_ar} onChange={e => setForm({ ...form, name_ar: e.target.value })} style={inputStyle} placeholder="خدمات طب الأسنان" dir="rtl" />
-                        </div>
-                        <div>
                             <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Order</label>
                             <input type="number" value={form.order} onChange={e => setForm({ ...form, order: parseInt(e.target.value) || 0 })} style={inputStyle} />
                         </div>
+                        
+                        {/* Dynamic Locale Names */}
+                        {locales.map(loc => (
+                            <div key={loc.code}>
+                                <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Name ({loc.code.toUpperCase()}){loc.code === 'en' ? ' *' : ''}</label>
+                                <input 
+                                    value={form.names[loc.code] || ''} 
+                                    onChange={e => setForm({ ...form, names: { ...form.names, [loc.code]: e.target.value } })} 
+                                    required={loc.code === 'en'} 
+                                    style={inputStyle} 
+                                    placeholder={`Name in ${loc.name}`} 
+                                    dir={loc.is_rtl ? 'rtl' : 'ltr'} 
+                                />
+                            </div>
+                        ))}
+                        
                         <div style={{ gridColumn: 'span 2' }}>
                             <label style={{ display: 'block', marginBottom: '0.3rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>Description</label>
                             <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, minHeight: '80px' }} />
@@ -132,20 +165,27 @@ export default function ServicesPage() {
                             <tr style={{ background: 'var(--muted)' }}>
                                 <th style={thStyle}>Order</th>
                                 <th style={thStyle}>Slug</th>
-                                <th style={thStyle}>Name (EN)</th>
-                                <th style={thStyle}>Name (AR)</th>
+                                <th style={thStyle}>Name</th>
+                                <th style={thStyle}>Languages</th>
                                 <th style={thStyle}>Chatwoot</th>
                                 <th style={thStyle}>Status</th>
                                 <th style={thStyle}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {services.map(s => (
+                            {services.map(s => {
+                                const namesObj = s.names || { en: s.name_en, ar: s.name_ar };
+                                const translatedCount = Object.values(namesObj).filter(v => v).length;
+                                return (
                                 <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                     <td style={tdStyle}>{s.order}</td>
                                     <td style={tdStyle}><code style={{ fontSize: '0.8rem' }}>{s.slug}</code></td>
-                                    <td style={tdStyle}>{s.name_en}</td>
-                                    <td style={{ ...tdStyle, direction: 'rtl' }}>{s.name_ar || '—'}</td>
+                                    <td style={tdStyle}>{s.names?.['en'] || s.name_en}</td>
+                                    <td style={tdStyle}>
+                                        <span style={{ fontSize: '0.75rem', background: 'var(--muted)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                                            {translatedCount} / {locales.length}
+                                        </span>
+                                    </td>
                                     <td style={tdStyle}>{s.chatwoot_website_token ? '✅' : '🔄 Default'}</td>
                                     <td style={tdStyle}>
                                         <span style={{ padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, background: s.deleted_at ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', color: s.deleted_at ? '#f87171' : '#4ade80' }}>
@@ -157,7 +197,7 @@ export default function ServicesPage() {
                                         {!s.deleted_at && <button onClick={() => handleDelete(s.id)} style={{ ...actionBtn, color: '#f87171' }}>Delete</button>}
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 </div>

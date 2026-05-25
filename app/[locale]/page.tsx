@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { STATIC_LOCALES } from '@/shared/lib/i18n';
 import { PublicChatwoot } from '@/shared/components/chatwoot/PublicChatwoot';
+import { getCachedTranslations } from '@/features/translations';
+import { getCachedLocales } from '@/features/locales';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hitouae.com';
 
@@ -12,14 +13,18 @@ interface HomePageProps {
 
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
     const { locale } = await params;
+    const locales = await getCachedLocales();
     const languages: Record<string, string> = {};
-    for (const loc of STATIC_LOCALES) {
-        languages[loc] = `${SITE_URL}/${loc}`;
+    for (const loc of locales) {
+        languages[loc.code] = `${SITE_URL}/${loc.code}`;
     }
+    const translations = await getCachedTranslations(locale);
+    const title = translations['home.meta_title'] || 'Hito Health Tourism — Premium Health Tourism in the UAE';
+    const description = translations['home.meta_desc'] || 'World-class dental, cosmetic surgery, fertility treatments and more in Dubai, UAE. Trusted by thousands of international patients.';
+
     return {
-        title: 'Hito Health Tourism — Premium Health Tourism in the UAE',
-        description:
-            'World-class dental, cosmetic surgery, fertility treatments and more in Dubai, UAE. Trusted by thousands of international patients.',
+        title,
+        description,
         alternates: { canonical: `${SITE_URL}/${locale}`, languages },
     };
 }
@@ -40,7 +45,8 @@ const IMAGES = {
 
 export default async function HomePage({ params }: HomePageProps) {
     const { locale } = await params;
-    const isAr = locale === 'ar';
+    const translations = await getCachedTranslations(locale);
+    const t = (key: string, fallback: string) => translations[key] || fallback;
 
     return (
         <>
@@ -50,7 +56,7 @@ export default async function HomePage({ params }: HomePageProps) {
                 <section style={styles.hero}>
                     <Image
                         src={IMAGES.hero}
-                        alt={isAr ? 'أفق دبي' : 'Dubai skyline'}
+                        alt="Dubai skyline"
                         fill
                         priority
                         style={{ objectFit: 'cover', objectPosition: 'center 40%' }}
@@ -59,24 +65,20 @@ export default async function HomePage({ params }: HomePageProps) {
                     <div style={styles.heroOverlay} />
                     <div style={styles.heroContent}>
                         <span style={styles.heroBadge}>
-                            {isAr ? '🏥 مرحباً بك في الإمارات' : '🏥 Welcome to the UAE'}
+                            {t('home.hero_badge', '🏥 Welcome to the UAE')}
                         </span>
                         <h1 style={styles.heroTitle}>
-                            {isAr
-                                ? 'رحلتك الصحية تبدأ من دبي'
-                                : 'Your Health Journey Starts in Dubai'}
+                            {t('home.hero_title', 'Your Health Journey Starts in Dubai')}
                         </h1>
                         <p style={styles.heroSub}>
-                            {isAr
-                                ? 'خدمات طبية عالمية المستوى مع رعاية شخصية في قلب الإمارات'
-                                : 'World-class medical treatments with personalized care in the heart of the UAE'}
+                            {t('home.hero_sub', 'World-class medical treatments with personalized care in the heart of the UAE')}
                         </p>
                         <div style={styles.heroButtons}>
                             <Link href={`/${locale}/services`} style={styles.btnPrimary}>
-                                {isAr ? 'استكشف خدماتنا' : 'Explore Our Services'}
+                                {t('home.hero_btn_primary', 'Explore Our Services')}
                             </Link>
                             <Link href={`/${locale}/privacy`} style={styles.btnOutline}>
-                                {isAr ? 'تعرف علينا' : 'Learn More'}
+                                {t('home.hero_btn_outline', 'Learn More')}
                             </Link>
                         </div>
                     </div>
@@ -85,10 +87,10 @@ export default async function HomePage({ params }: HomePageProps) {
                 {/* ═══════════ STATS BAR ═══════════ */}
                 <section style={styles.statsBar}>
                     {[
-                        { num: '10,000+', label: isAr ? 'مريض سعيد' : 'Happy Patients' },
-                        { num: '50+', label: isAr ? 'طبيب متخصص' : 'Specialist Doctors' },
-                        { num: '15+', label: isAr ? 'سنوات خبرة' : 'Years of Experience' },
-                        { num: '98%', label: isAr ? 'رضا المرضى' : 'Patient Satisfaction' },
+                        { num: '10,000+', label: t('home.stat1', 'Happy Patients') },
+                        { num: '50+', label: t('home.stat2', 'Specialist Doctors') },
+                        { num: '15+', label: t('home.stat3', 'Years of Experience') },
+                        { num: '98%', label: t('home.stat4', 'Patient Satisfaction') },
                     ].map((s) => (
                         <div key={s.label} style={styles.statItem}>
                             <span style={styles.statNum}>{s.num}</span>
@@ -100,45 +102,35 @@ export default async function HomePage({ params }: HomePageProps) {
                 {/* ═══════════ SERVICES ═══════════ */}
                 <section style={styles.section}>
                     <h2 style={styles.sectionTitle}>
-                        {isAr ? 'خدماتنا الطبية' : 'Our Medical Services'}
+                        {t('home.services_title', 'Our Medical Services')}
                     </h2>
                     <p style={styles.sectionSub}>
-                        {isAr
-                            ? 'نقدم مجموعة شاملة من العلاجات الطبية بأعلى المعايير العالمية'
-                            : 'A comprehensive range of treatments delivered to the highest international standards'}
+                        {t('home.services_sub', 'A comprehensive range of treatments delivered to the highest international standards')}
                     </p>
                     <div style={styles.servicesGrid}>
                         {[
                             {
                                 img: IMAGES.dental,
-                                title: isAr ? 'طب الأسنان' : 'Dental Care',
-                                desc: isAr
-                                    ? 'ابتسامة هوليوود، زراعة الأسنان، تقويم وعلاجات متقدمة'
-                                    : 'Hollywood smile, implants, orthodontics & advanced treatments',
+                                title: t('home.service1_title', 'Dental Care'),
+                                desc: t('home.service1_desc', 'Hollywood smile, implants, orthodontics & advanced treatments'),
                                 icon: '🦷',
                             },
                             {
                                 img: IMAGES.cosmetic,
-                                title: isAr ? 'الجراحة التجميلية' : 'Cosmetic Surgery',
-                                desc: isAr
-                                    ? 'عمليات تجميل بأحدث التقنيات مع نتائج طبيعية'
-                                    : 'Latest techniques with natural, stunning results',
+                                title: t('home.service2_title', 'Cosmetic Surgery'),
+                                desc: t('home.service2_desc', 'Latest techniques with natural, stunning results'),
                                 icon: '✨',
                             },
                             {
                                 img: IMAGES.fertility,
-                                title: isAr ? 'علاجات الخصوبة' : 'Fertility Treatments',
-                                desc: isAr
-                                    ? 'حلول متكاملة للخصوبة مع أعلى معدلات النجاح'
-                                    : 'Comprehensive fertility solutions with top success rates',
+                                title: t('home.service3_title', 'Fertility Treatments'),
+                                desc: t('home.service3_desc', 'Comprehensive fertility solutions with top success rates'),
                                 icon: '💫',
                             },
                             {
                                 img: IMAGES.ortho,
-                                title: isAr ? 'جراحة العظام' : 'Orthopedic Surgery',
-                                desc: isAr
-                                    ? 'استبدال المفاصل والعلاجات الرياضية المتقدمة'
-                                    : 'Joint replacements & advanced sports medicine',
+                                title: t('home.service4_title', 'Orthopedic Surgery'),
+                                desc: t('home.service4_desc', 'Joint replacements & advanced sports medicine'),
                                 icon: '🦴',
                             },
                         ].map((svc) => (
@@ -173,7 +165,7 @@ export default async function HomePage({ params }: HomePageProps) {
                         <div style={styles.whyImgWrap}>
                             <Image
                                 src={IMAGES.whyUs}
-                                alt={isAr ? 'فندق فاخر في دبي' : 'Luxury hotel in Dubai'}
+                                alt="Luxury hotel in Dubai"
                                 fill
                                 style={{ objectFit: 'cover', borderRadius: '1.5rem' }}
                                 sizes="(max-width:768px) 100vw, 50vw"
@@ -181,37 +173,29 @@ export default async function HomePage({ params }: HomePageProps) {
                         </div>
                         <div style={styles.whyContent}>
                             <h2 style={styles.sectionTitle}>
-                                {isAr ? 'لماذا تختار دبي للعلاج؟' : 'Why Choose Dubai for Treatment?'}
+                                {t('home.why_title', 'Why Choose Dubai for Treatment?')}
                             </h2>
                             <div style={styles.featuresList}>
                                 {[
                                     {
                                         icon: '🌟',
-                                        title: isAr ? 'أطباء معتمدون دولياً' : 'Internationally Accredited Doctors',
-                                        desc: isAr
-                                            ? 'فريقنا من أفضل الأطباء المعتمدين من مؤسسات عالمية'
-                                            : 'Our team consists of top doctors certified by global institutions',
+                                        title: t('home.why1_title', 'Internationally Accredited Doctors'),
+                                        desc: t('home.why1_desc', 'Our team consists of top doctors certified by global institutions'),
                                     },
                                     {
                                         icon: '💰',
-                                        title: isAr ? 'أسعار تنافسية' : 'Competitive Pricing',
-                                        desc: isAr
-                                            ? 'وفّر حتى 60% مقارنة بالدول الغربية مع نفس الجودة'
-                                            : 'Save up to 60% compared to Western countries with the same quality',
+                                        title: t('home.why2_title', 'Competitive Pricing'),
+                                        desc: t('home.why2_desc', 'Save up to 60% compared to Western countries with the same quality'),
                                     },
                                     {
                                         icon: '🏨',
-                                        title: isAr ? 'باقات سياحية متكاملة' : 'All-Inclusive Packages',
-                                        desc: isAr
-                                            ? 'إقامة فندقية فاخرة، نقل، ومتابعة بعد العلاج'
-                                            : 'Luxury hotel stays, transfers, and post-treatment follow-ups',
+                                        title: t('home.why3_title', 'All-Inclusive Packages'),
+                                        desc: t('home.why3_desc', 'Luxury hotel stays, transfers, and post-treatment follow-ups'),
                                     },
                                     {
                                         icon: '🌍',
-                                        title: isAr ? 'دعم متعدد اللغات' : 'Multilingual Support',
-                                        desc: isAr
-                                            ? 'فريق دعم بالعربية والإنجليزية على مدار الساعة'
-                                            : '24/7 support team in Arabic and English',
+                                        title: t('home.why4_title', 'Multilingual Support'),
+                                        desc: t('home.why4_desc', '24/7 support team in multiple languages'),
                                     },
                                 ].map((f) => (
                                     <div key={f.title} style={styles.featureItem}>
@@ -231,7 +215,7 @@ export default async function HomePage({ params }: HomePageProps) {
                 <section style={styles.ctaSection}>
                     <Image
                         src={IMAGES.cta}
-                        alt={isAr ? 'دبي ليلاً' : 'Dubai at night'}
+                        alt="Dubai at night"
                         fill
                         style={{ objectFit: 'cover' }}
                         sizes="100vw"
@@ -239,17 +223,13 @@ export default async function HomePage({ params }: HomePageProps) {
                     <div style={styles.ctaOverlay} />
                     <div style={styles.ctaContent}>
                         <h2 style={styles.ctaTitle}>
-                            {isAr
-                                ? 'هل أنت مستعد لبدء رحلتك الصحية؟'
-                                : 'Ready to Start Your Health Journey?'}
+                            {t('home.cta_title', 'Ready to Start Your Health Journey?')}
                         </h2>
                         <p style={styles.ctaSub}>
-                            {isAr
-                                ? 'تواصل معنا اليوم للحصول على استشارة مجانية وخطة علاج مخصصة'
-                                : 'Contact us today for a free consultation and a personalized treatment plan'}
+                            {t('home.cta_sub', 'Contact us today for a free consultation and a personalized treatment plan')}
                         </p>
                         <Link href={`/${locale}/services`} style={styles.ctaBtn}>
-                            {isAr ? 'احجز استشارتك المجانية' : 'Book Your Free Consultation'}
+                            {t('home.cta_btn', 'Book Your Free Consultation')}
                         </Link>
                     </div>
                 </section>

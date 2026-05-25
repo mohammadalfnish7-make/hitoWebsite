@@ -8,6 +8,7 @@ const createServiceSchema = z.object({
     slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
     name_en: z.string().min(1).max(255),
     name_ar: z.string().max(255).optional(),
+    names: z.record(z.string()).optional(),
     description: z.string().optional(),
     meta_title: z.record(z.string()).optional(),
     meta_description: z.record(z.string()).optional(),
@@ -23,7 +24,7 @@ const updateServiceSchema = createServiceSchema.partial();
 export async function GET() {
     try {
         const rows = await sql`
-      SELECT id, slug, name_en, name_ar, description,
+      SELECT id, slug, name_en, name_ar, names, description,
              meta_title, meta_description, chatwoot_website_token,
              "order", deleted_at, created_at, updated_at
       FROM services
@@ -50,8 +51,8 @@ export async function POST(req: Request) {
 
         const data = parsed.data;
         const [row] = await sql`
-      INSERT INTO services (id, slug, name_en, name_ar, description, meta_title, meta_description, chatwoot_website_token, "order")
-      VALUES (gen_random_uuid(), ${data.slug}, ${data.name_en}, ${data.name_ar ?? null},
+      INSERT INTO services (id, slug, name_en, name_ar, names, description, meta_title, meta_description, chatwoot_website_token, "order")
+      VALUES (gen_random_uuid(), ${data.slug}, ${data.name_en}, ${data.name_ar ?? null}, ${data.names ? JSON.stringify(data.names) : null},
               ${data.description ?? null}, ${JSON.stringify(data.meta_title ?? {})},
               ${JSON.stringify(data.meta_description ?? {})},
               ${data.chatwoot_website_token ?? null}, ${data.order ?? 0})

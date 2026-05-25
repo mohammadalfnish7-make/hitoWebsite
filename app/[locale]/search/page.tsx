@@ -2,7 +2,9 @@ import { searchAll } from '@/features/search';
 import { PublicChatwoot } from '@/shared/components/chatwoot/PublicChatwoot';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { STATIC_LOCALES } from '@/shared/lib/i18n';
+import { getCachedLocales } from '@/features/locales';
+import { getCachedTranslations } from '@/features/translations';
+import { getLocalizedField } from '@/shared/lib/i18n';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hitouae.com';
 
@@ -14,13 +16,16 @@ interface Props {
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
     const { locale } = await params;
     const { q } = await searchParams;
+    const locales = await getCachedLocales();
     const languages: Record<string, string> = {};
-    for (const loc of STATIC_LOCALES) {
-        languages[loc] = q ? `${SITE_URL}/${loc}/search?q=${encodeURIComponent(q)}` : `${SITE_URL}/${loc}/search`;
+    for (const loc of locales) {
+        languages[loc.code] = q ? `${SITE_URL}/${loc.code}/search?q=${encodeURIComponent(q)}` : `${SITE_URL}/${loc.code}/search`;
     }
+    const translations = await getCachedTranslations(locale);
+
     return {
-        title: q ? `Search: ${q} — Hito Health Tourism` : 'Search — Hito Health Tourism',
-        description: 'Search our health tourism services, treatments, and doctors.',
+        title: q ? `${translations['search.title'] || 'Search'}: ${q} — Hito Health Tourism` : `${translations['search.title'] || 'Search'} — Hito Health Tourism`,
+        description: translations['search.desc'] || 'Search our health tourism services, treatments, and doctors.',
         alternates: { canonical: q ? `${SITE_URL}/${locale}/search?q=${encodeURIComponent(q)}` : `${SITE_URL}/${locale}/search`, languages },
     };
 }
@@ -31,12 +36,16 @@ export default async function SearchPage({ params, searchParams }: Props) {
     const query = (q || '').trim();
 
     const results = query.length >= 2 ? await searchAll(query) : [];
-    const title = locale === 'ar' ? 'نتائج البحث' : 'Search Results';
-    const noQuery = locale === 'ar' ? 'أدخل كلمة بحث (حرفين على الأقل)' : 'Enter a search term (at least 2 characters)';
-    const noResults = locale === 'ar' ? 'لا توجد نتائج' : 'No results found';
-    const serviceLabel = locale === 'ar' ? 'خدمة' : 'Service';
-    const subServiceLabel = locale === 'ar' ? 'علاج' : 'Treatment';
-    const doctorLabel = locale === 'ar' ? 'طبيب' : 'Doctor';
+    
+    const translations = await getCachedTranslations(locale);
+    const t = (key: string, fallback: string) => translations[key] || fallback;
+
+    const title = t('search.results_title', 'Search Results');
+    const noQuery = t('search.no_query', 'Enter a search term (at least 2 characters)');
+    const noResults = t('search.no_results', 'No results found');
+    const serviceLabel = t('search.service_label', 'Service');
+    const subServiceLabel = t('search.subservice_label', 'Treatment');
+    const doctorLabel = t('search.doctor_label', 'Doctor');
 
     function getResultUrl(r: { type: string; slug: string; parent_slug?: string | null }) {
         if (r.type === 'service') return `/${locale}/services/${r.slug}`;
@@ -44,7 +53,12 @@ export default async function SearchPage({ params, searchParams }: Props) {
         return null;
     }
 
-    function displayName(r: { name_en: string; name_ar?: string | null }) {
+    // searchAll might still return name_en and name_ar depending on its implementation.
+    // If we update searchAll to return names JSONB, this should use getLocalizedField.
+    // Assuming searchAll returns raw rows from views or tables, we might have to adapt it.
+    function displayName(r: any) {
+        if (r.names) return getLocalizedField(r.names, locale);
+        // Fallback for older searchAll implementation
         return locale === 'ar' && r.name_ar ? r.name_ar : r.name_en;
     }
 
@@ -62,9 +76,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
             {query.length >= 2 && (
                 <>
                     <p style={{ color: 'var(--muted-foreground)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                        {locale === 'ar'
-                            ? `عرض ${results.length} نتيجة لـ `
-                            : `Showing ${results.length} results for `}
+                        {t('search.showing_results', 'Showing')} {results.length} {t('search.results_for', 'results for')}
                         &quot;<strong>{query}</strong>&quot;
                     </p>
 

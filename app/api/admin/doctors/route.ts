@@ -7,10 +7,13 @@ import { writeAuditLog } from '@/features/audit';
 const createDoctorSchema = z.object({
     name_en: z.string().min(1).max(255),
     name_ar: z.string().max(255).optional(),
+    names: z.record(z.string()).optional(),
     specialty_en: z.string().max(255).optional(),
     specialty_ar: z.string().max(255).optional(),
+    specialties: z.record(z.string()).optional(),
     bio_en: z.string().optional(),
     bio_ar: z.string().optional(),
+    bios: z.record(z.string()).optional(),
     image_url: z.string().url().optional(),
     experience_years: z.number().int().min(0).optional(),
 });
@@ -65,10 +68,10 @@ export async function POST(req: Request) {
 
         const data = parsed.data;
         const [row] = await sql`
-      INSERT INTO doctors (id, name_en, name_ar, specialty_en, specialty_ar, bio_en, bio_ar, image_url, experience_years)
-      VALUES (gen_random_uuid(), ${data.name_en}, ${data.name_ar ?? null},
-              ${data.specialty_en ?? null}, ${data.specialty_ar ?? null},
-              ${data.bio_en ?? null}, ${data.bio_ar ?? null},
+      INSERT INTO doctors (id, name_en, name_ar, names, specialty_en, specialty_ar, specialties, bio_en, bio_ar, bios, image_url, experience_years)
+      VALUES (gen_random_uuid(), ${data.name_en}, ${data.name_ar ?? null}, ${data.names ? JSON.stringify(data.names) : null},
+              ${data.specialty_en ?? null}, ${data.specialty_ar ?? null}, ${data.specialties ? JSON.stringify(data.specialties) : null},
+              ${data.bio_en ?? null}, ${data.bio_ar ?? null}, ${data.bios ? JSON.stringify(data.bios) : null},
               ${data.image_url ?? null}, ${data.experience_years ?? null})
       RETURNING *
     `;

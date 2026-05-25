@@ -8,6 +8,7 @@ const createSubServiceSchema = z.object({
     slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
     name_en: z.string().min(1).max(255),
     name_ar: z.string().max(255).optional(),
+    names: z.record(z.string()).optional(),
     description: z.string().optional(),
     meta_title: z.record(z.string()).optional(),
     meta_description: z.record(z.string()).optional(),
@@ -65,12 +66,12 @@ export async function POST(req: Request) {
 
         const data = parsed.data;
         const [row] = await sql`
-      INSERT INTO sub_services (id, service_id, slug, name_en, name_ar, description,
+      INSERT INTO sub_services (id, service_id, slug, name_en, name_ar, names, description,
         meta_title, meta_description, chatwoot_website_token, main_image_url,
         avg_cost_uae, avg_cost_home_country, cost_uae_currency, cost_home_currency,
         cost_notes, "order")
       VALUES (gen_random_uuid(), ${service_id}, ${data.slug}, ${data.name_en},
-        ${data.name_ar ?? null}, ${data.description ?? null},
+        ${data.name_ar ?? null}, ${data.names ? JSON.stringify(data.names) : null}, ${data.description ?? null},
         ${data.meta_title ? JSON.stringify(data.meta_title) : null},
         ${data.meta_description ? JSON.stringify(data.meta_description) : null},
         ${data.chatwoot_website_token ?? null}, ${data.main_image_url ?? null},

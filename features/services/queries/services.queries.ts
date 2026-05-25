@@ -9,7 +9,7 @@ import type { Service } from '../types';
 /** List all active services, ordered. */
 export async function getServices(): Promise<Service[]> {
     const rows = await sql`
-    SELECT id, slug, name_en, name_ar, description,
+    SELECT id, slug, name_en, name_ar, names, description,
            meta_title, meta_description,
            chatwoot_website_token, "order",
            created_at, updated_at
@@ -23,7 +23,7 @@ export async function getServices(): Promise<Service[]> {
 /** Get a single service by slug. Returns null if not found or soft-deleted. */
 export async function getServiceBySlug(slug: string): Promise<Service | null> {
     const [row] = await sql`
-    SELECT id, slug, name_en, name_ar, description,
+    SELECT id, slug, name_en, name_ar, names, description,
            meta_title, meta_description,
            chatwoot_website_token, "order",
            created_at, updated_at
@@ -39,6 +39,7 @@ export async function createService(data: {
     slug: string;
     name_en: string;
     name_ar?: string;
+    names?: Record<string, string>;
     description?: string;
     meta_title?: Record<string, string>;
     meta_description?: Record<string, string>;
@@ -46,8 +47,8 @@ export async function createService(data: {
     order?: number;
 }): Promise<Service> {
     const [row] = await sql`
-    INSERT INTO services (id, slug, name_en, name_ar, description, meta_title, meta_description, chatwoot_website_token, "order")
-    VALUES (gen_random_uuid(), ${data.slug}, ${data.name_en}, ${data.name_ar ?? null},
+    INSERT INTO services (id, slug, name_en, name_ar, names, description, meta_title, meta_description, chatwoot_website_token, "order")
+    VALUES (gen_random_uuid(), ${data.slug}, ${data.name_en}, ${data.name_ar ?? null}, ${data.names ? JSON.stringify(data.names) : null},
             ${data.description ?? null}, ${JSON.stringify(data.meta_title ?? {})},
             ${JSON.stringify(data.meta_description ?? {})},
             ${data.chatwoot_website_token ?? null}, ${data.order ?? 0})
