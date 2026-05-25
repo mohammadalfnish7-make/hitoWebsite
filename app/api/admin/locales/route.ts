@@ -47,7 +47,7 @@ export async function POST(req: Request) {
             actor_admin_id: session?.user?.id || 'unknown',
             action: 'locale.create',
             entity_type: 'locale',
-            entity_id: null,
+            entity_id: undefined,
             metadata: { code: data.code, name: data.name, admin_email: session?.user?.email },
         });
 

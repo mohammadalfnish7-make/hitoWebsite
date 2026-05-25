@@ -72,7 +72,7 @@ export async function PUT(req: Request, { params }: RouteProps) {
             actor_admin_id: session?.user?.id || 'unknown',
             action: 'locale.update',
             entity_type: 'locale',
-            entity_id: null,
+            entity_id: undefined,
             metadata: { code, updates: data, admin_email: session?.user?.email },
         });
 
