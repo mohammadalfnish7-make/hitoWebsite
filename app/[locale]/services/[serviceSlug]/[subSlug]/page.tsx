@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     return {
-        title: getLocalizedField(subService.meta_title, locale) || getLocalizedField(subService.names, locale),
+        title: getLocalizedField(subService.meta_title, locale) || getLocalizedField(subService.names, locale) || subService.name_ar || subService.name_en,
         description: getLocalizedField(subService.meta_description, locale) || subService.description || '',
         alternates: { languages },
     };
@@ -50,28 +50,32 @@ export default async function SubServiceDetailPage({ params }: Props) {
     const translations = await getCachedTranslations(locale);
     const t = (key: string, fallback: string) => translations[key] || fallback;
 
-    const name = getLocalizedField(subService.names, locale);
-    const serviceName = getLocalizedField(service.names, locale);
+    const name = getLocalizedField(subService.names, locale) || subService.name_ar || subService.name_en;
+    const serviceName = getLocalizedField(service.names, locale) || service.name_ar || service.name_en;
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
             <TrackPageView serviceId={service.id} subServiceId={subService.id} />
             {/* Breadcrumb */}
-            <nav style={{ marginBottom: '2rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>
-                <Link href={`/${locale}`} style={{ color: 'var(--primary)' }}>{t('breadcrumb.home', 'Home')}</Link>
-                {' / '}
-                <Link href={`/${locale}/services`} style={{ color: 'var(--primary)' }}>{t('breadcrumb.services', 'Services')}</Link>
-                {' / '}
+            <nav style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>
+                <Link href={`/${locale}`} style={{ color: 'var(--primary)' }}>{t('header.home', 'Home')}</Link>
+                <span>/</span>
+                <Link href={`/${locale}/services`} style={{ color: 'var(--primary)' }}>{t('header.services', 'Services')}</Link>
+                <span>/</span>
                 <Link href={`/${locale}/services/${serviceSlug}`} style={{ color: 'var(--primary)' }}>{serviceName}</Link>
-                {' / '}
-                <span>{name}</span>
+                <span>/</span>
+                <span style={{ color: 'var(--foreground)' }}>{name}</span>
             </nav>
 
             <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '1rem' }}>{name}</h1>
 
             {/* Hero image */}
             {subService.main_image_url && (
-                <div style={{ width: '100%', height: '400px', borderRadius: '16px', marginBottom: '2rem', background: `url(${subService.main_image_url}) center/cover`, boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }} />
+                <img 
+                    src={subService.main_image_url} 
+                    alt={name} 
+                    style={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '16px', marginBottom: '2rem' }} 
+                />
             )}
 
             {subService.description && (
@@ -132,10 +136,10 @@ export default async function SubServiceDetailPage({ params }: Props) {
                                     <div style={{ width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 1rem', background: `url(${doc.image_url}) center/cover`, border: '3px solid var(--primary)' }} />
                                 )}
                                 <h3 style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                    {getLocalizedField(doc.names, locale)}
+                                    {getLocalizedField(doc.names, locale) || doc.name_ar || doc.name_en}
                                 </h3>
                                 <p style={{ color: 'var(--muted-foreground)', fontSize: '0.85rem' }}>
-                                    {getLocalizedField(doc.specialties, locale)}
+                                    {getLocalizedField(doc.specialties, locale) || doc.specialty_ar || doc.specialty_en}
                                 </p>
                                 {doc.is_primary && (
                                     <span style={{ display: 'inline-block', marginTop: '0.5rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600 }}>

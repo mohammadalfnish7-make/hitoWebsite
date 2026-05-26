@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     return {
-        title: getLocalizedField(service.meta_title, locale) || getLocalizedField(service.names, locale),
+        title: getLocalizedField(service.meta_title, locale) || getLocalizedField(service.names, locale) || service.name_ar || service.name_en,
         description: getLocalizedField(service.meta_description, locale) || service.description || '',
         alternates: { languages },
     };
@@ -44,7 +44,7 @@ export default async function ServiceDetailPage({ params }: Props) {
     const translations = await getCachedTranslations(locale);
     const t = (key: string, fallback: string) => translations[key] || fallback;
 
-    const name = getLocalizedField(service.names, locale);
+    const name = getLocalizedField(service.names, locale) || service.name_ar || service.name_en;
     const chatwootToken = resolveToken(undefined, service.chatwoot_website_token);
 
     return (
@@ -52,12 +52,12 @@ export default async function ServiceDetailPage({ params }: Props) {
             <TrackPageView serviceId={service.id} />
             <PublicChatwoot locale={locale} token={chatwootToken} serviceSlug={serviceSlug} />
             {/* Breadcrumb */}
-            <nav style={{ marginBottom: '2rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>
-                <Link href={`/${locale}`} style={{ color: 'var(--primary)' }}>{t('breadcrumb.home', 'Home')}</Link>
-                {' / '}
-                <Link href={`/${locale}/services`} style={{ color: 'var(--primary)' }}>{t('breadcrumb.services', 'Services')}</Link>
-                {' / '}
-                <span>{name}</span>
+            <nav style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>
+                <Link href={`/${locale}`} style={{ color: 'var(--primary)' }}>{t('header.home', 'Home')}</Link>
+                <span>/</span>
+                <Link href={`/${locale}/services`} style={{ color: 'var(--primary)' }}>{t('header.services', 'Services')}</Link>
+                <span>/</span>
+                <span style={{ color: 'var(--foreground)' }}>{name}</span>
             </nav>
 
             <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '1rem' }}>{name}</h1>
@@ -94,7 +94,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                                 )}
                                 <div style={{ padding: '1.5rem' }}>
                                     <h3 style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                        {getLocalizedField(sub.names, locale)}
+                                        {getLocalizedField(sub.names, locale) || sub.name_ar || sub.name_en}
                                     </h3>
                                     {sub.avg_cost_uae && (
                                         <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>
