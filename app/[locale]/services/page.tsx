@@ -37,10 +37,10 @@ export default async function ServicesListPage({ params }: Props) {
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
             <PublicChatwoot locale={locale} />
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.5rem', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.5rem', textAlign: 'start' }}>
                 {t('services.title', 'Our Services')}
             </h1>
-            <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', marginBottom: '3rem', fontSize: '1.1rem' }}>
+            <p style={{ textAlign: 'start', color: 'var(--muted-foreground)', marginBottom: '3rem', fontSize: '1.1rem' }}>
                 {t('services.subtitle', 'Discover our premium health tourism services in the UAE')}
             </p>
 

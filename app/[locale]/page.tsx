@@ -260,9 +260,10 @@ const styles: Record<string, React.CSSProperties> = {
     heroContent: {
         position: 'relative',
         zIndex: 2,
-        textAlign: 'center',
-        maxWidth: '800px',
-        padding: '0 1.5rem',
+        textAlign: 'start',
+        width: '100%',
+        maxWidth: '1200px',
+        padding: '0 2rem',
     },
     heroBadge: {
         display: 'inline-block',
@@ -293,7 +294,7 @@ const styles: Record<string, React.CSSProperties> = {
     heroButtons: {
         display: 'flex',
         gap: '1rem',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         flexWrap: 'wrap' as const,
     },
     btnPrimary: {
@@ -357,15 +358,15 @@ const styles: Record<string, React.CSSProperties> = {
         fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
         fontWeight: 800,
         color: '#0f172a',
-        textAlign: 'center' as const,
+        textAlign: 'start' as const,
         marginBottom: '0.75rem',
     },
     sectionSub: {
         fontSize: '1.1rem',
         color: '#64748b',
-        textAlign: 'center' as const,
+        textAlign: 'start' as const,
         maxWidth: '600px',
-        margin: '0 auto 3rem',
+        margin: '0 0 3rem 0',
         lineHeight: 1.6,
     },
 
@@ -488,10 +489,12 @@ const styles: Record<string, React.CSSProperties> = {
         zIndex: 1,
     },
     ctaContent: {
-        position: 'relative' as const,
+        position: 'relative',
         zIndex: 2,
-        textAlign: 'center' as const,
-        maxWidth: '700px',
+        textAlign: 'start' as const,
+        width: '100%',
+        maxWidth: '1200px',
+        padding: '0 2rem',
     },
     ctaTitle: {
         fontSize: 'clamp(1.5rem, 3.5vw, 2.5rem)',

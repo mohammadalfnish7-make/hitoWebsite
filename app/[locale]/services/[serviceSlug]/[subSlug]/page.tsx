@@ -87,13 +87,13 @@ export default async function SubServiceDetailPage({ params }: Props) {
             {/* Cost block */}
             {subService.avg_cost_uae && (
                 <section style={{ background: 'var(--muted)', borderRadius: '16px', padding: '2rem', border: '1px solid var(--border)', marginBottom: '2.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
-                        {t('subservice.cost_estimate', 'Cost Estimate')}
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+                        {t('sub_service_detail.cost.title', 'Cost Estimate')}
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                         <div>
-                            <p style={{ color: 'var(--muted-foreground)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>
-                                {t('subservice.in_uae', 'In UAE')}
+                            <p style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                                {t('sub_service_detail.cost.in_uae', 'In UAE')}
                             </p>
                             <p style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)' }}>
                                 {subService.avg_cost_uae} {subService.cost_uae_currency || 'AED'}
@@ -101,8 +101,8 @@ export default async function SubServiceDetailPage({ params }: Props) {
                         </div>
                         {subService.avg_cost_home_country && (
                             <div>
-                                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>
-                                    {t('subservice.in_your_country', 'In Your Country')}
+                                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                                    {t('sub_service_detail.cost.in_home', 'In Your Country')}
                                 </p>
                                 <p style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>
                                     {subService.avg_cost_home_country} {subService.cost_home_currency || 'USD'}
@@ -125,9 +125,9 @@ export default async function SubServiceDetailPage({ params }: Props) {
 
             {/* Doctors */}
             {doctors.length > 0 && (
-                <section style={{ marginBottom: '2.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>
-                        {t('subservice.our_doctors', 'Our Doctors')}
+                <section style={{ marginBottom: '3rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem' }}>
+                        {t('sub_service_detail.doctors.title', 'Our Doctors')}
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.25rem' }}>
                         {doctors.map((doc: any) => (
@@ -143,7 +143,7 @@ export default async function SubServiceDetailPage({ params }: Props) {
                                 </p>
                                 {doc.is_primary && (
                                     <span style={{ display: 'inline-block', marginTop: '0.5rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600 }}>
-                                        {t('subservice.lead_doctor', 'Lead Doctor')}
+                                        {t('sub_service_detail.doctors.primary', 'Lead Doctor')}
                                     </span>
                                 )}
                             </div>

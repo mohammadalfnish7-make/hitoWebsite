@@ -71,7 +71,7 @@ export default async function ServiceDetailPage({ params }: Props) {
             {subServices.length > 0 && (
                 <section>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem' }}>
-                        {t('service.available_treatments', 'Available Treatments')}
+                        {t('service_detail.sub_services.title', 'Available Treatments')}
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
                         {subServices.map(sub => (
@@ -98,7 +98,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                                     </h3>
                                     {sub.avg_cost_uae && (
                                         <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>
-                                            {t('service.from', 'From')} {sub.avg_cost_uae} {sub.cost_uae_currency || 'AED'}
+                                            {t('service_detail.from', 'From')} {sub.avg_cost_uae} {sub.cost_uae_currency || 'AED'}
                                         </p>
                                     )}
                                 </div>
