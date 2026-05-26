@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     return {
-        title: getLocalizedField(subService.meta_title, locale) || getLocalizedField(subService.names, locale) || subService.name_ar || subService.name_en,
+        title: getLocalizedField(subService.meta_title, locale) || getLocalizedField(subService.names, locale) || (locale === 'ar' ? subService.name_ar || subService.name_en : subService.name_en || subService.name_ar),
         description: getLocalizedField(subService.meta_description, locale) || subService.description || '',
         alternates: { languages },
     };
@@ -50,8 +50,8 @@ export default async function SubServiceDetailPage({ params }: Props) {
     const translations = await getCachedTranslations(locale);
     const t = (key: string, fallback: string) => translations[key] || fallback;
 
-    const name = getLocalizedField(subService.names, locale) || subService.name_ar || subService.name_en;
-    const serviceName = getLocalizedField(service.names, locale) || service.name_ar || service.name_en;
+    const name = getLocalizedField(subService.names, locale) || (locale === 'ar' ? subService.name_ar || subService.name_en : subService.name_en || subService.name_ar);
+    const serviceName = getLocalizedField(service.names, locale) || (locale === 'ar' ? service.name_ar || service.name_en : service.name_en || service.name_ar);
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
@@ -136,10 +136,10 @@ export default async function SubServiceDetailPage({ params }: Props) {
                                     <div style={{ width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 1rem', background: `url(${doc.image_url}) center/cover`, border: '3px solid var(--primary)' }} />
                                 )}
                                 <h3 style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                    {getLocalizedField(doc.names, locale) || doc.name_ar || doc.name_en}
+                                    {getLocalizedField(doc.names, locale) || (locale === 'ar' ? doc.name_ar || doc.name_en : doc.name_en || doc.name_ar)}
                                 </h3>
                                 <p style={{ color: 'var(--muted-foreground)', fontSize: '0.85rem' }}>
-                                    {getLocalizedField(doc.specialties, locale) || doc.specialty_ar || doc.specialty_en}
+                                    {getLocalizedField(doc.specialties, locale) || (locale === 'ar' ? doc.specialty_ar || doc.specialty_en : doc.specialty_en || doc.specialty_ar)}
                                 </p>
                                 {doc.is_primary && (
                                     <span style={{ display: 'inline-block', marginTop: '0.5rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600 }}>

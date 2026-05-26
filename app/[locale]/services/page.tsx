@@ -61,7 +61,7 @@ export default async function ServicesListPage({ params }: Props) {
                         }}
                     >
                         <h2 style={{ fontSize: '1.35rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                            {getLocalizedField(service.names, locale) || service.name_ar || service.name_en}
+                            {getLocalizedField(service.names, locale) || (locale === 'ar' ? service.name_ar || service.name_en : service.name_en || service.name_ar)}
                         </h2>
                         {service.description && (
                             <p style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>

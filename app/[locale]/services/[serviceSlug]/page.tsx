@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     return {
-        title: getLocalizedField(service.meta_title, locale) || getLocalizedField(service.names, locale) || service.name_ar || service.name_en,
+        title: getLocalizedField(service.meta_title, locale) || getLocalizedField(service.names, locale) || (locale === 'ar' ? service.name_ar || service.name_en : service.name_en || service.name_ar),
         description: getLocalizedField(service.meta_description, locale) || service.description || '',
         alternates: { languages },
     };
@@ -44,7 +44,7 @@ export default async function ServiceDetailPage({ params }: Props) {
     const translations = await getCachedTranslations(locale);
     const t = (key: string, fallback: string) => translations[key] || fallback;
 
-    const name = getLocalizedField(service.names, locale) || service.name_ar || service.name_en;
+    const name = getLocalizedField(service.names, locale) || (locale === 'ar' ? service.name_ar || service.name_en : service.name_en || service.name_ar);
     const chatwootToken = resolveToken(undefined, service.chatwoot_website_token);
 
     return (
@@ -94,7 +94,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                                 )}
                                 <div style={{ padding: '1.5rem' }}>
                                     <h3 style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                        {getLocalizedField(sub.names, locale) || sub.name_ar || sub.name_en}
+                                        {getLocalizedField(sub.names, locale) || (locale === 'ar' ? sub.name_ar || sub.name_en : sub.name_en || sub.name_ar)}
                                     </h3>
                                     {sub.avg_cost_uae && (
                                         <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>
