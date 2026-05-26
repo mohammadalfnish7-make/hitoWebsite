@@ -14,17 +14,13 @@ if [ -n "$DATABASE_URL" ] && [ -d /app/migrations ]; then
 
   echo "[migrate] Checking schema..."
 
-  if psql "$DATABASE_URL" -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'services'" | grep -q 1; then
-    echo "[migrate] Schema already applied, skipping."
-  else
-    echo "[migrate] Applying migrations..."
-    for f in /app/migrations/*.sql; do
-      [ -f "$f" ] || continue
-      echo "[migrate] Running $(basename "$f")"
-      psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
-    done
-    echo "[migrate] Done."
-  fi
+  echo "[migrate] Applying migrations..."
+  for f in /app/migrations/*.sql; do
+    [ -f "$f" ] || continue
+    echo "[migrate] Running $(basename "$f")"
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+  done
+  echo "[migrate] Done."
 fi
 
 exec node server.js
